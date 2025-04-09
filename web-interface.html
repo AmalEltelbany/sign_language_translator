@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Translator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .video-container {
+            margin: 20px 0;
+            width: 100%;
+            max-width: 640px;
+        }
+        #video-stream {
+            width: 100%;
+            border: 1px solid #ddd;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .upload-form {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sign Language Translator</h1>
+        
+        <div class="tab-controls">
+            <button onclick="showTab('stream')">Live Camera</button>
+            <button onclick="showTab('upload')">Upload Video</button>
+        </div>
+        
+        <div id="stream-tab" class="tab-content">
+            <div class="video-container">
+                <img id="video-stream" src="/stream" alt="Live stream">
+            </div>
+            
+            <div class="controls">
+                <button id="start-stream">Start Stream</button>
+                <button id="stop-stream">Stop Stream</button>
+            </div>
+            
+            <div class="results">
+                <h3>Translation Results:</h3>
+                <p id="current-word"><strong>Current Word:</strong> <span>None</span></p>
+                <p id="current-sentence"><strong>Current Sentence:</strong> <span>None</span></p>
+            </div>
+        </div>
+        
+        <div id="upload-tab" class="tab-content" style="display:none;">
+            <div class="upload-form">
+                <h3>Upload Video File</h3>
+                <form id="video-upload-form" enctype="multipart/form-data">
+                    <input type="file" name="video" accept="video/*">
+                    <button type="submit">Translate Video</button>
+                </form>
+            </div>
+            
+            <div class="results">
+                <h3>Translation Results:</h3>
+                <p id="upload-words"><strong>Detected Words:</strong> <span>None</span></p>
+                <p id="upload-sentence"><strong>Complete Sentence:</strong> <span>None</span></p>
+                <div id="download-section" style="display:none;">
+                    <h3>Processed Video:</h3>
+                    <a id="download-link" href="#" download>Download Processed Video</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            document.getElementById(tabName + '-tab').style.display = 'block';
+        }
+        
+        document.getElementById('video-upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('/translate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('#upload-words span').textContent = data.detected_words.join(', ');
+                document.querySelector('#upload-sentence span').textContent = data.parsed_sentence;
+                
+                if (data.video_url) {
+                    document.getElementById('download-section').style.display = 'block';
+                    document.getElementById('download-link').href = data.video_url;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error processing video');
+            });
+        });
+        
+        // Add WebSocket or periodic polling for live updates
+        function updateTranslation() {
+            fetch('/current-translation')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('#current-word span').textContent = data.current_word || 'None';
+                    document.querySelector('#current-sentence span').textContent = data.current_sentence || 'None';
+                });
+        }
+        
+        setInterval(updateTranslation, 1000);
+    </script>
+</body>
+</html>

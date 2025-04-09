@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SignSearch - Sign Language Dictionary</title>
+  <style>
+    
+    :root {
+      --primary-color: #1a73e8;
+      --primary-light: #e8f0fe;
+      --primary-dark: #0d47a1;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --background: #ffffff;
+      --border-radius: 12px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    
+    body {
+      background-color: #f8f9fa;
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding-top: 24px;
+      background-image: url("backgrounf.png");
+background-size: 10%;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--primary-color);
+      color: white;
+      padding: 8px;
+      z-index: 100;
+      transition: top 0.3s;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    
+    main {
+      padding: 24px 0;
+    }
+    
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    
+    h1 {
+      font-size: 36px;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+    }
+    
+    .subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+    
+    .search-container {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+    }
+    
+    .search-wrapper {
+      display: flex;
+      background-color: var(--background);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+    
+    .search-wrapper:focus-within {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    .search-input {
+      flex: 1;
+      padding: 16px 24px;
+      border: none;
+      font-size: 18px;
+      outline: none;
+    }
+    
+    .search-input::placeholder {
+      color: #aaa;
+    }
+    
+    .search-button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 16px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .search-button:hover, .search-button:focus {
+      background-color: var(--primary-dark);
+    }
+    
+    .search-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: var(--background);
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      z-index: 5;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .suggestion-item {
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .suggestion-item:hover {
+      background-color: var(--primary-light);
+    }
+    
+    .results-section {
+      margin-top: 48px;
+    }
+    
+    .result-card {
+      background-color: var(--background);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 32px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    
+    .result-header {
+      padding: 24px;
+      background-color: var(--primary-light);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .result-title-content {
+      flex: 1;
+    }
+    
+    .result-word {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 4px;
+    }
+    
+    .result-phonetic {
+      color: var(--text-secondary);
+      font-size: 16px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .favorite-button,
+    .download-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition);
+      padding: 8px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .favorite-button:hover,
+    .download-button:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      color: var(--primary-color);
+    }
+    
+    .favorite-button.active {
+      color: #f44336;
+    }
+    
+    .favorite-button svg,
+    .download-button svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+    
+    .result-content {
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+    }
+    
+    @media (min-width: 768px) {
+      .result-content {
+        flex-direction: row;
+      }
+    }
+    
+    .video-container {
+      flex: 1;
+      min-width: 0;
+      margin-bottom: 24px;
+    }
+    
+    @media (min-width: 768px) {
+      .video-container {
+        margin-bottom: 0;
+        margin-right: 24px;
+      }
+    }
+    
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      height: 0;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+    
+    .video-placeholder {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+    }
+    
+    .info-container {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .definition-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+    }
+    
+    .definition-text {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+    }
+    
+    .video-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .control-button {
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .control-button:hover {
+      background-color: #d2e3fc;
+    }
+    
+    .download-control {
+      color: #4caf50;
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+    
+    .download-control:hover {
+      background-color: rgba(76, 175, 80, 0.2);
+    }
+    
+    .related-words {
+      margin-top: 16px;
+    }
+    
+    .related-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+    }
+    
+    .related-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .related-tag {
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .related-tag:hover {
+      background-color: #d2e3fc;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      background-color: var(--background);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      color: var(--primary-color);
+      margin-bottom: 16px;
+    }
+    
+    .empty-title {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    
+    .empty-text {
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    footer {
+      background-color: var(--background);
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 32px 0;
+      margin-top: 64px;
+    }
+    
+    .footer-content {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      align-items: center;
+      text-align: center;
+    }
+    
+    @media (min-width: 768px) {
+      .footer-content {
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+      }
+    }
+    
+    .footer-logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+    
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+    
+    .footer-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    
+    .footer-link:hover {
+      color: var(--primary-color);
+    }
+    
+    .copyright {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--text-primary);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+  
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    
+    <main id="main">
+      <div class="container">
+        <section class="hero">
+          <h1>Sign Language Dictionary</h1>
+          <p class="subtitle">Search for words and discover how they are signed through video demonstrations</p>
+          
+          <div class="search-container">
+            <div class="search-wrapper">
+              <input type="text" class="search-input" placeholder="Search for a word or phrase..." aria-label="Search for a word or phrase" />
+              <button type="submit" class="search-button">Search</button>
+            </div>
+          </div>
+        </section>
+        
+        <section class="results-section">
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-title-content">
+                <h2 class="result-word">Hello</h2>
+                <p class="result-phonetic">Used as a greeting or to begin a conversation</p>
+              </div>
+              <div class="action-buttons">
+                <button class="favorite-button" aria-label="Add to favorites">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                </button>
+                <button class="download-button" aria-label="Download sign video">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="result-content">
+              <div class="video-container">
+                <div class="video-wrapper">
+                  <div class="video-placeholder">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                  </div>
+                </div>
+                
+                <div class="video-controls">
+                  <button class="control-button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  Play
+                </button>
+                <button class="control-button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14M5 12h14"></path>
+                  </svg>
+                  Slow Motion
+                </button>
+              </div>
+            </div>
+            
+            <div class="info-container">
+              <h3 class="definition-title">How to sign</h3>
+              <p class="definition-text">1. Start with your dominant hand near your head, palm facing outward and fingers spread.</p>
+              <p class="definition-text">2. Move your hand away from your head in a slight arc, as if you're greeting someone.</p>
+              <p class="definition-text">3. Smile while signing to convey a friendly greeting.</p>
+              
+              <div class="related-words">
+                <h4 class="related-title">Related signs</h4>
+                <div class="related-tags">
+                  <span class="related-tag">Hi</span>
+                  <span class="related-tag">Greeting</span>
+                  <span class="related-tag">Welcome</span>
+                </div>
+            </div>
+          </div>
+              
+            </body>
+            </html>

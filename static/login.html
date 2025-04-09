@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Together</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #4a90e2 0%, #6aa6f8 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 16px;
+        }
+        
+        .logo-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+        
+        .logo-text {
+            font-weight: bold;
+            margin-top: 5px;
+            font-size: 1.2rem;
+        }
+        
+        .login-container {
+            background-color: white;
+            border-radius: 15px 15px 0 0;
+            width: 100%;
+            padding: 30px 20px;
+            margin-top: 40px;
+            flex-grow: 1;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f5f5f5;
+            font-size: 0.9rem;
+        }
+        
+        .btn-login {
+            background: #23c6d4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: 80%;
+            margin: 20px auto;
+            text-align: center;
+            display: block;
+        }
+        
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .footer-links a {
+            color: #4a90e2;
+            text-decoration: none;
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="Picture1.png" alt="Together Logo" class="logo-img">
+        <div class="logo-text">TOGETHER</div>
+    </div>
+    
+    <div class="login-container">
+        <h1>Login</h1>
+        <p class="subtitle">Sign in to continue</p>
+        
+        <form>
+            <div class="form-group">
+                <label for="name">NAME</label>
+                <input type="text" id="name" value="Jiara Martins">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">PASSWORD</label>
+                <input type="password" id="password" value="******">
+            </div>
+        <a href="main.html">
+            <button type="submit" class="btn-login">Log in</button>
+        </a>
+            <div class="footer-links">
+                <a href="#">Forgot Password?</a>
+                <a href="signup.html">Signup</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

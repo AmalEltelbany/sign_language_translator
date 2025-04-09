@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Language Translator</title>
+  <style>
+    :root {
+      --primary-blue: #2b6cb0;
+      --light-blue: #ebf8ff;
+      --blue-hover: #2c5282;
+      --text-dark: #2d3748;
+      --text-light: #718096;
+      --white: #ffffff;
+      --border-radius: 12px;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      background-color: var(--white);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--neutral-50);
+      color: var(--neutral-900);
+      line-height: 1.5;
+      background-image: url("backgrounf.png");
+      background-size: 10%;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .options-container {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .option-button {
+      background-color: var(--white);
+      color: var(--primary-blue);
+      border: 2px solid var(--primary-blue);
+      border-radius: var(--border-radius);
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .option-button.active {
+      background-color: var(--primary-blue);
+      color: var(--white);
+    }
+
+    .option-button:hover {
+      background-color: var(--light-blue);
+    }
+
+    .option-button.active:hover {
+      background-color: var(--blue-hover);
+    }
+
+    .upload-section {
+      background-color: var(--light-blue);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      border: 2px dashed var(--primary-blue);
+      transition: var(--transition);
+    }
+
+    .upload-section.drag-over {
+      background-color: rgba(43, 108, 176, 0.1);
+      transform: scale(1.01);
+    }
+
+    .upload-icon {
+      width: 60px;
+      height: 60px;
+      color: var(--primary-blue);
+    }
+
+    .upload-button {
+      background-color: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .upload-button:hover {
+      background-color: var(--blue-hover);
+      transform: translateY(-2px);
+    }
+
+    .upload-button:active {
+      transform: translateY(0);
+    }
+
+    .preview-section {
+      display: none;
+      background-color: var(--white);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .preview-section.visible {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .record-section {
+      display: none;
+      background-color: var(--light-blue);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .record-section.visible {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .video-container {
+      width: 100%;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      overflow: hidden;
+      position: relative;
+      background-color: #000;
+    }
+
+    video {
+      width: 100%;
+      display: block;
+    }
+
+    .video-controls {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem;
+      background-color: var(--light-blue);
+    }
+
+    .recording-controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .control-button {
+      background-color: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .control-button:hover {
+      background-color: var(--blue-hover);
+    }
+
+    .control-button.record {
+      background-color: #e53e3e;
+    }
+
+    .control-button.record:hover {
+      background-color: #c53030;
+    }
+
+    .control-button.stop {
+      background-color: #718096;
+    }
+
+    .control-button.stop:hover {
+      background-color: #4a5568;
+    }
+
+    .control-button:disabled {
+      background-color: #cbd5e0;
+      cursor: not-allowed;
+    }
+
+    .translation-section {
+      display: none;
+      background-color: var(--white);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .translation-section.visible {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .translation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .translation-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary-blue);
+    }
+
+    .translation-content {
+      background-color: var(--light-blue);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      min-height: 150px;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      color: var(--primary-blue);
+    }
+
+    .loading.visible {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background-color: var(--light-blue);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .progress {
+      height: 100%;
+      background-color: var(--primary-blue);
+      width: 0%;
+      transition: width 1s ease;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid var(--primary-blue);
+      width: 30px;
+      height: 30px;
+      margin: 1rem auto;
+      animation: spin 1s linear infinite;
+    }
+
+    .upload-text {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: var(--neutral-900);
+    }
+
+    .upload-text2 {
+      font-size: 3rem;
+      font-weight: 500;
+      margin-bottom: -2rem;
+      color: var(--neutral-900);
+      align-self: center;
+      color: #2b6cb0;
+    }
+    
+    .upload-subtext {
+      font-size: 0.875rem;
+      color: var(--neutral-700);
+      margin-bottom: 1.5rem;
+    }
+
+    .upload-subtext2 {
+      font-size: 1.25rem;
+      color: grey;
+      align-self: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .record-timer {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary-blue);
+      margin-top: 0.5rem;
+    }
+
+    .record-indicator {
+      display: none;
+      width: 16px;
+      height: 16px;
+      background-color: #e53e3e;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: blink 1s infinite;
+    }
+
+    .record-indicator.visible {
+      display: inline-block;
+    }
+   
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .upload-section, .record-section {
+        padding: 1.5rem;
+      }
+      
+      .upload-icon {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .video-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .translation-content {
+        padding: 1rem;
+      }
+
+      .options-container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p class="upload-text2">Sign Language Translator</p>
+    <p class="upload-subtext2">Upload or record your sign language video</p>
+    
+    <!-- Options Section -->
+    <div class="options-container">
+      <button class="option-button active" id="uploadOption">Upload Video</button>
+      <button class="option-button" id="recordOption">Record Video</button>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-section" id="uploadArea">
+      <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+      <p class="upload-text">Drag and drop your sign language video here<br>or click the button below to select a file</p>
+      <button class="upload-button" id="uploadButton">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        Upload Video
+      </button>
+      <input type="file" id="fileInput" accept="video/*" style="display: none;">
+    </div>
+
+    <!-- Record Section -->
+    <div class="record-section" id="recordSection">
+      <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      <p class="upload-text">Record your sign language video directly</p>
+      
+      <video id="cameraPreview" autoplay muted></video>
+      
+      <div class="record-timer">
+        <span id="recordIndicator" class="record-indicator"></span>
+        <span id="timer">00:00</span>
+      </div>
+      
+      <div class="recording-controls">
+        <button class="control-button record" id="startRecordButton">Start Recording</button>
+        <button class="control-button stop" id="stopRecordButton" disabled>Stop Recording</button>
+        <button class="control-button" id="useRecordedButton" disabled>Use Recording</button>
+      </div>
+    </div>
+    
+    <!-- Preview Section -->
+    <div class="preview-section" id="previewSection">
+      <div class="video-container">
+        <video id="videoPreview" controls></video>
+      </div>
+      <div class="video-controls">
+        <button class="control-button" id="translateButton">Translate</button>
+        <button class="control-button" id="newVideoButton">Upload New Video</button>
+      </div>
+    </div>
+    
+    <!-- Loading Section -->
+    <div class="loading" id="loadingSection">
+      <p>Translating your sign language video...</p>
+      <div class="spinner"></div>
+      <div class="progress-bar">
+        <div class="progress" id="progressBar"></div>
+      </div>
+    </div>
+    
+    <!-- Translation Section -->
+    <div class="translation-section" id="translationSection">
+      <div class="translation-header">
+        <h2 class="translation-title">Translation Result</h2>
+        <button class="control-button" id="copyButton">Copy Text</button>
+      </div>
+      <div class="translation-content" id="translationContent">
+        <!-- Translation will appear here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const uploadOption = document.getElementById('uploadOption');
+    const recordOption = document.getElementById('recordOption');
+    const uploadArea = document.getElementById('uploadArea');
+    const recordSection = document.getElementById('recordSection');
+    const uploadButton = document.getElementById('uploadButton');
+    const fileInput = document.getElementById('fileInput');
+    const previewSection = document.getElementById('previewSection');
+    const videoPreview = document.getElementById('videoPreview');
+    const translateButton = document.getElementById('translateButton');
+    const newVideoButton = document.getElementById('newVideoButton');
+    const loadingSection = document.getElementById('loadingSection');
+    const progressBar = document.getElementById('progressBar');
+    const translationSection = document.getElementById('translationSection');
+    const translationContent = document.getElementById('translationContent');
+    const copyButton = document.getElementById('copyButton');
+    
+    // Recording elements
+    const cameraPreview = document.getElementById('cameraPreview');
+    const startRecordButton = document.getElementById('startRecordButton');
+    const stopRecordButton = document.getElementById('stopRecordButton');
+    const useRecordedButton = document.getElementById('useRecordedButton');
+    const timer = document.getElementById('timer');
+    const recordIndicator = document.getElementById('recordIndicator');
+
+    // Recording variables
+    let stream;
+    let mediaRecorder;
+    let recordedChunks = [];
+    let recordingTimer;
+    let seconds = 0;
+    let minutes = 0;
+
+    // Toggle between upload and record options
+    uploadOption.addEventListener('click', () => {
+      uploadOption.classList.add('active');
+      recordOption.classList.remove('active');
+      uploadArea.style.display = 'flex';
+      recordSection.classList.remove('visible');
+      
+      // Stop camera if it's running
+      stopCamera();
+    });
+
+    recordOption.addEventListener('click', () => {
+      recordOption.classList.add('active');
+      uploadOption.classList.remove('active');
+      uploadArea.style.display = 'none';
+      recordSection.classList.add('visible');
+      
+      // Start camera
+      startCamera();
+    });
+
+    // Camera functions
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+        
+        cameraPreview.srcObject = stream;
+        startRecordButton.disabled = false;
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        alert('Could not access camera and microphone. Please ensure you have given permission and your devices are working properly.');
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        cameraPreview.srcObject = null;
+        stream = null;
+      }
+    }
+
+    // Recording functions
+    startRecordButton.addEventListener('click', () => {
+      // Reset variables
+      recordedChunks = [];
+      seconds = 0;
+      minutes = 0;
+      timer.textContent = '00:00';
+      
+      // Start recording
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          recordedChunks.push(e.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const videoURL = URL.createObjectURL(blob);
+        cameraPreview.src = videoURL;
+        useRecordedButton.disabled = false;
+      };
+      
+      mediaRecorder.start();
+      
+      // Update UI
+      startRecordButton.disabled = true;
+      stopRecordButton.disabled = false;
+      recordIndicator.classList.add('visible');
+      
+      // Start timer
+      recordingTimer = setInterval(updateTimer, 1000);
+    });
+
+    stopRecordButton.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        clearInterval(recordingTimer);
+        recordIndicator.classList.remove('visible');
+        stopRecordButton.disabled = true;
+      }
+    });
+
+    useRecordedButton.addEventListener('click', () => {
+      if (recordedChunks.length > 0) {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const videoURL = URL.createObjectURL(blob);
+        videoPreview.src = videoURL;
+        
+        // Show preview section
+        recordSection.classList.remove('visible');
+        previewSection.classList.add('visible');
+        
+        // Stop camera
+        stopCamera();
+      }
+    });
+
+    function updateTimer() {
+      seconds++;
+      if (seconds >= 60) {
+        seconds = 0;
+        minutes++;
+      }
+      
+      timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // Upload button click handler
+    uploadButton.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // File input change handler
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith('video/')) {
+        handleVideoUpload(file);
+      }
+    });
+
+    // Drag and drop handlers
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('drag-over');
+      
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('video/')) {
+        handleVideoUpload(file);
+      }
+    });
+
+    // Handle video upload
+    function handleVideoUpload(file) {
+      const videoURL = URL.createObjectURL(file);
+      videoPreview.src = videoURL;
+      
+      // Show preview section
+      uploadArea.style.display = 'none';
+      previewSection.classList.add('visible');
+    }
+
+    // Translate button click handler
+    translateButton.addEventListener('click', () => {
+      previewSection.classList.remove('visible');
+      loadingSection.classList.add('visible');
+      progressBar.style.width = '0%';
+
+      // Get video file from either recording or upload
+      let videoFile;
+      if (recordedChunks.length > 0) {
+          videoFile = new Blob(recordedChunks, { type: 'video/webm' });
+      } else if (fileInput.files.length > 0) {
+          videoFile = fileInput.files[0];
+      } else {
+          showTranslationError('No video selected or recorded.');
+          return;
+      }
+
+      sendVideoToBackend(videoFile);
+  });
+  function sendVideoToBackend(videoFile) {
+    // Show progress animation
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += 5;
+        progressBar.style.width = `${progress}%`;
+        if (progress >= 95) clearInterval(progressInterval);
+    }, 500);
+
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('video', videoFile);
+
+    // Send to backend
+    fetch('/translate', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        loadingSection.classList.remove('visible');
+        translationSection.classList.add('visible');
+        
+        if (data.error) {
+            translationContent.textContent = `Error: ${data.error}`;
+        } else {
+            translationContent.textContent = data.sentence || 
+                `Detected words: ${(data.words || []).join(', ')}`;
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        console.error('Translation error:', error);
+        showTranslationError(error.message);
+    });
+}
+
+function showTranslationError(message) {
+    loadingSection.classList.remove('visible');
+    translationSection.classList.add('visible');
+    translationContent.textContent = message || 'An unknown error occurred';
+}
+
+// Browser compatibility check - Keep this
+if (!navigator.mediaDevices?.getUserMedia) {
+    recordOption.disabled = true;
+    recordOption.title = "Browser doesn't support recording";
+}
+    // Simulate translation process
+    function simulateTranslation() {
+     // Translate button click handler
+translateButton.addEventListener('click', () => {
+  previewSection.classList.remove('visible');
+  loadingSection.classList.add('visible');
+
+  // Get the video file from preview or recorded blob
+  let videoFile;
+  if (recordedChunks.length > 0) {
+    videoFile = new Blob(recordedChunks, { type: 'video/webm' });
+  } else {
+    videoFile = fileInput.files[0];
+  }
+
+  if (!videoFile) {
+    alert('No video selected or recorded.');
+    loadingSection.classList.remove('visible');
+    previewSection.classList.add('visible');
+    return;
+  }
+
+  // Prepare form data
+  const formData = new FormData();
+  formData.append('video', videoFile);
+
+  // Send video to backend
+  fetch('/translate', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    loadingSection.classList.remove('visible');
+    translationSection.classList.add('visible');
+    
+    if (data.error) {
+      translationContent.textContent = `Error: ${data.error}`;
+    } else {
+      translationContent.textContent = data.sentence || "No sentence detected.";
+    }
+  })
+  .catch(error => {
+    console.error('Translation error:', error);
+    loadingSection.classList.remove('visible');
+    translationSection.classList.add('visible');
+    translationContent.textContent = 'An error occurred during translation.';
+  });
+});
+    }
+
+    // Check if browser supports required APIs
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      recordOption.disabled = true;
+      recordOption.title = "Your browser does not support video recording";
+    }
+    
+  </script>
+</body>
+</html>
