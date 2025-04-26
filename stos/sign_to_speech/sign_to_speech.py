@@ -68,16 +68,69 @@ class SignToSpeech:
 
         """
         words = []
+        last_word = ""
+        consecutive_same_word = 0
+        base_confidence_threshold = 0.85  # Base confidence threshold
+        min_frames_for_word = 3  # Minimum frames to confirm a word
+        word_confidence_count = {}
+        word_confidence_scores = {}
+        dynamic_threshold = base_confidence_threshold
+        
         for word, frame in self.__model.start_stream():
-            
-            if word != "":
-                if word == 'na':
-                    self.__sentence_queue.append(' '.join(words))
-                    words = []
-                    if not self.__listener_thread.is_alive():
-                        del self.__listener_thread
-                        self.__listener_thread = threading.Thread(target=self.sentence_listener)
-                        self.__listener_thread.start()
-                else:
-                    words.append(word)
+            if word != "" and hasattr(frame, 'confidence'):
+                # Update dynamic threshold based on recent detections
+                dynamic_threshold = max(base_confidence_threshold - (len(words) * 0.02), 0.75)
+                
+                if frame.confidence >= dynamic_threshold:
+                    print(f"Detected word: {word} with confidence {frame.confidence:.4f} (threshold: {dynamic_threshold:.4f})")
+                    
+                    # Track confidence scores for better word validation
+                    if word not in word_confidence_scores:
+                        word_confidence_scores[word] = [frame.confidence]
+                    else:
+                        word_confidence_scores[word].append(frame.confidence)
+                        # Keep only recent confidence scores
+                        word_confidence_scores[word] = word_confidence_scores[word][-5:]
+                    
+                    # Count high-confidence detections for each word
+                    if word not in word_confidence_count:
+                        word_confidence_count[word] = 1
+                    else:
+                        word_confidence_count[word] += 1
+                
+                # Calculate average confidence for the word
+                avg_confidence = sum(word_confidence_scores.get(word, [0])) / len(word_confidence_scores.get(word, [1]))
+                
+                # Process word if it meets both frequency and confidence criteria
+                if word_confidence_count[word] >= min_frames_for_word and avg_confidence >= dynamic_threshold:
+                    # Handle repeated words with improved logic
+                    if word == last_word:
+                        consecutive_same_word += 1
+                        if consecutive_same_word > 2:  # Skip excessive repetitions
+                            continue
+                    else:
+                        consecutive_same_word = 0
+                        last_word = word
+                        # Only reset counts for the current word to maintain context
+                        word_confidence_count[word] = 0
+                        word_confidence_scores[word] = []
+                    
+                    if word == 'na':
+                        if words:  # Process sentence
+                            sentence = ' '.join(words)
+                            print(f"Forming sentence: {sentence}")
+                            self.__sentence_queue.append(sentence)
+                            words = []
+                            if not self.__listener_thread.is_alive():
+                                del self.__listener_thread
+                                self.__listener_thread = threading.Thread(target=self.sentence_listener)
+                                self.__listener_thread.start()
+                    else:
+                        # Add word if it passes all filters
+                        if len(word) > 1:  # Skip single-character predictions
+                            words.append(word)
+                            print(f"Current words buffer: {words}")
+            else:
+                # Reset confidence count if we get a low confidence frame
+                word_confidence_count = {}
             yield word, frame
