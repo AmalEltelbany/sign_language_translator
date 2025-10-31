@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Video Meeting | WebRTC</title>
+    <style>
+        :root {
+            --primary-blue: #3498db;
+            --dark-blue: #2980b9;
+            --light-blue: #e3f2fd;
+            --lighter-blue: #f0f8ff;
+            --white: #ffffff;
+            --light-gray: #f9f9f9;
+            --gray: #e0e0e0;
+            --dark-gray: #555555;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--white);
+            color: var(--dark-gray);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: url("backgrounf.png");
+            background-size: 10%;
+        }
+
+        header {
+            background-color: var(--light-blue);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            fill: var(--primary-blue);
+        }
+
+        .meeting-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        #meeting-id {
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            background-color: var(--white);
+            border-radius: 4px;
+            border: 1px solid var(--gray);
+        }
+
+        .copy-btn {
+            background-color: var(--light-blue);
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--gray);
+        }
+
+        main {
+            flex: 1;
+            padding: 1rem;
+            
+        }
+
+        #setup-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 2rem;
+        }
+
+        .welcome-message {
+            text-align: center;
+        }
+
+        .welcome-message h1 {
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-message p {
+            max-width: 600px;
+            color: var(--dark-gray);
+        }
+
+        #preview-container {
+            position: relative;
+            width: 480px;
+            height: 360px;
+            background-color: var(--gray);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #local-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .action-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .video-icon {
+            fill: var(--white);
+        }
+
+        #meeting-container {
+            display: none;
+            height: calc(100vh - 120px);
+        }
+
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            height: 100%;
+            padding: 1rem 0;
+        }
+
+        .video-wrapper {
+            position: relative;
+            background-color: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            aspect-ratio: 4/3;
+        }
+
+        .video-element {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .participant-name {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: var(--white);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--white);
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-btn {
+            background-color: var(--white);
+            color: var(--dark-gray);
+            border: 1px solid var(--gray);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background-color: var(--light-gray);
+        }
+
+        .control-btn.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-color: var(--primary-blue);
+        }
+
+        .leave-btn {
+            background-color: #e74c3c;
+            color: var(--white);
+            border: none;
+        }
+
+        .leave-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 10;
+        }
+
+        .loader-circle {
+            border: 4px solid var(--light-blue);
+            border-top: 4px solid var(--primary-blue);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            #preview-container {
+                width: 100%;
+                max-width: 480px;
+                height: auto;
+                aspect-ratio: 4/3;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="logo.png" alt="">
+        </div>
+        <div class="meeting-info">
+            <div id="meeting-id">Meeting ID: Loading...</div>
+            <button class="copy-btn" id="copy-meeting-id">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Initial setup view -->
+        <div id="setup-container">
+            <div class="welcome-message">
+                <h1>Welcome to ConnectMeet</h1>
+                <p>Get ready to join your video meeting. Please allow camera and microphone access when prompted.</p>
+            </div>
+            <div id="preview-container">
+                <video id="local-preview" autoplay muted playsinline></video>
+                <div class="loader" id="local-loader">
+                    <div class="loader-circle"></div>
+                </div>
+            </div>
+            <button class="action-btn" id="start-meeting-btn">
+                <svg class="video-icon" width="20" height="20" viewBox="0 0 24 24">
+                    <path d="M18 7c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-4.5l4 4v-13l-4 4V7z"/>
+                </svg>
+                Start Meeting
+            </button>
+        </div>
+
+        <!-- Meeting view -->
+        <div id="meeting-container">
+            <div class="videos-grid" id="videos-grid">
+                <!-- Video elements will be dynamically added here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Meeting controls (initially hidden) -->
+    <div class="controls" id="controls" style="display: none;">
+        <button class="control-btn active" id="mic-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+        </button>
+        <button class="control-btn active" id="camera-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <path d="M18 7c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-4.5l4 4v-13l-4 4V7z"/>
+            </svg>
+        </button>
+        <button class="control-btn leave-btn" id="leave-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <path d="M18 6.41L16.59 5 12 9.59 7.41 5 6 6.41 10.59 11 6 15.59 7.41 17 12 12.41 16.59 17 18 15.59 13.41 11z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Socket.io and WebRTC scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <script>
+        // Configuration constants
+        const CONFIG = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // DOM Elements
+        const localPreview = document.getElementById('local-preview');
+        const localLoader = document.getElementById('local-loader');
+        const startMeetingBtn = document.getElementById('start-meeting-btn');
+        const setupContainer = document.getElementById('setup-container');
+        const meetingContainer = document.getElementById('meeting-container');
+        const videosGrid = document.getElementById('videos-grid');
+        const controls = document.getElementById('controls');
+        const micBtn = document.getElementById('mic-btn');
+        const cameraBtn = document.getElementById('camera-btn');
+        const leaveBtn = document.getElementById('leave-btn');
+        const meetingIdElement = document.getElementById('meeting-id');
+        const copyMeetingIdBtn = document.getElementById('copy-meeting-id');
+
+        // App state
+        let localStream;
+        let socket;
+        let peers = {};
+        let roomId;
+        let micEnabled = true;
+        let cameraEnabled = true;
+        let username = "User " + Math.floor(Math.random() * 1000);
+
+        // Generate a random meeting ID (or we would get this from server in a real app)
+        roomId = Math.random().toString(36).substring(2, 12);
+        meetingIdElement.textContent = `Meeting ID: ${roomId}`;
+
+        // Initialize user media (camera/mic)
+        async function initUserMedia() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                
+                // Show local video
+                localPreview.srcObject = localStream;
+                localLoader.style.display = 'none';
+                
+                // Add event listener for the start meeting button
+                startMeetingBtn.addEventListener('click', startMeeting);
+                startMeetingBtn.disabled = false;
+                
+                return true;
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                alert('Could not access camera or microphone. Please check permissions.');
+                localLoader.style.display = 'none';
+                startMeetingBtn.disabled = true;
+                return false;
+            }
+        }
+
+        // Start the meeting
+        function startMeeting() {
+            // Connect to signaling server
+            socket = io('https://your-socket-server.com'); // Replace with your socket.io server URL
+            
+            // For demo purposes, we'll simulate socket.io behavior
+            simulateSocketIO();
+            
+            // Switch to meeting view
+            setupContainer.style.display = 'none';
+            meetingContainer.style.display = 'block';
+            controls.style.display = 'flex';
+            
+            // Add local video to the grid
+            addVideoStream(localStream, 'me', true);
+        }
+
+        // Add a video stream to the UI
+        function addVideoStream(stream, peerId, isLocal = false) {
+            const videoWrapper = document.createElement('div');
+            videoWrapper.className = 'video-wrapper';
+            videoWrapper.id = `video-wrapper-${peerId}`;
+            
+            const video = document.createElement('video');
+            video.className = 'video-element';
+            video.srcObject = stream;
+            video.autoplay = true;
+            if (isLocal) video.muted = true;
+            video.playsinline = true;
+            
+            const nameTag = document.createElement('div');
+            nameTag.className = 'participant-name';
+            nameTag.textContent = isLocal ? `${username} (You)` : `User ${peerId}`;
+            
+            videoWrapper.appendChild(video);
+            videoWrapper.appendChild(nameTag);
+            videosGrid.appendChild(videoWrapper);
+            
+            return videoWrapper;
+        }
+
+        // Create a peer connection
+        function createPeerConnection(peerId) {
+            const peerConnection = new RTCPeerConnection(CONFIG);
+            
+            // Add all local tracks to the peer connection
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+            
+            // Handle ICE candidates
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    // Send ICE candidate to the peer
+                    socket.emit('ice-candidate', {
+                        to: peerId,
+                        candidate: event.candidate
+                    });
+                }
+            };
+            
+            // Handle incoming tracks
+            peerConnection.ontrack = event => {
+                // Check if we already have this peer's video
+                if (document.getElementById(`video-wrapper-${peerId}`)) {
+                    return;
+                }
+                
+                const remoteStream = new MediaStream();
+                event.streams[0].getTracks().forEach(track => {
+                    remoteStream.addTrack(track);
+                });
+                
+                addVideoStream(remoteStream, peerId);
+            };
+            
+            return peerConnection;
+        }
+
+        // For demo purposes - simulate Socket.IO behavior
+        function simulateSocketIO() {
+            // Simulate connecting to a room
+            console.log('Connected to room:', roomId);
+            
+            // Simulate other peers joining with a delay
+            setTimeout(() => {
+                simulateNewPeer('user1');
+            }, 2000);
+            
+            setTimeout(() => {
+                simulateNewPeer('user2');
+            }, 4000);
+        }
+
+        // Simulate a new peer joining
+        function simulateNewPeer(peerId) {
+            console.log('New peer joined:', peerId);
+            
+            // Create a fake video stream for demonstration
+            const fakeStream = createFakeStream();
+            addVideoStream(fakeStream, peerId);
+        }
+
+        // Create a fake video stream for demo purposes
+        function createFakeStream() {
+            const canvas = Object.assign(document.createElement('canvas'), { width: 640, height: 480 });
+            const ctx = canvas.getContext('2d');
+            
+            // Fill with a color
+            ctx.fillStyle = '#a9d6ff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add some text
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.fillText('Remote Participant', canvas.width/2, canvas.height/2);
+            
+            // Convert canvas to stream
+            const stream = canvas.captureStream(30);
+            
+            // Add a fake audio track
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const destination = audioContext.createMediaStreamDestination();
+            oscillator.connect(destination);
+            oscillator.frequency.setValueAtTime(0, audioContext.currentTime); // Silent
+            
+            // Add the audio track to the stream
+            stream.addTrack(destination.stream.getAudioTracks()[0]);
+            
+            return stream;
+        }
+
+        // Handle microphone toggle
+        micBtn.addEventListener('click', () => {
+            micEnabled = !micEnabled;
+            localStream.getAudioTracks().forEach(track => {
+                track.enabled = micEnabled;
+            });
+            
+            if (micEnabled) {
+                micBtn.classList.add('active');
+            } else {
+                micBtn.classList.remove('active');
+            }
+        });
+
+        // Handle camera toggle
+        cameraBtn.addEventListener('click', () => {
+            cameraEnabled = !cameraEnabled;
+            localStream.getVideoTracks().forEach(track => {
+                track.enabled = cameraEnabled;
+            });
+            
+            if (cameraEnabled) {
+                cameraBtn.classList.add('active');
+            } else {
+                cameraBtn.classList.remove('active');
+            }
+        });
+
+        // Handle leaving the meeting
+        leaveBtn.addEventListener('click', () => {
+            // Close all peer connections
+            Object.values(peers).forEach(peer => peer.close());
+            
+            // Stop all local tracks
+            localStream.getTracks().forEach(track => track.stop());
+            
+            // Disconnect socket
+            if (socket) socket.disconnect();
+            
+            // Return to setup view
+            setupContainer.style.display = 'flex';
+            meetingContainer.style.display = 'none';
+            controls.style.display = 'none';
+            
+            // Clear videos grid (except local preview)
+            while (videosGrid.firstChild) {
+                videosGrid.removeChild(videosGrid.firstChild);
+            }
+            
+            // Reinitialize
+            initUserMedia();
+        });
+
+        // Copy meeting ID button
+        copyMeetingIdBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(roomId).then(() => {
+                alert('Meeting ID copied to clipboard!');
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', initUserMedia);
+    </script>
+</body>
+</html>

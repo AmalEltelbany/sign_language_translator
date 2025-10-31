@@ -43,3 +43,7 @@ model/*.hdf5
 temp/
 .DS_Store
 Thumbs.db
+model/
+venv/
+temp/
+logs/

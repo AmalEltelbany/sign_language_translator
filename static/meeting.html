@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Meeting Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, button {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #video-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        video {
+            width: 300px;
+            height: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #translations {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .translation-entry {
+            margin-bottom: 10px;
+            padding: 5px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        #status {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤟 Sign Language Meeting Room</h1>
+        <p style="text-align: center;">Real-time translation between sign language and speech</p>
+
+        <div class="section" id="join-section">
+            <h2>Join or Create a Meeting</h2>
+            <div class="input-group">
+                <label for="username">Your Name:</label>
+                <input type="text" id="username" placeholder="Enter your name">
+            </div>
+            <div class="input-group">
+                <label for="user-type">User Type:</label>
+                <select id="user-type">
+                    <option value="speaker">Speaker (Uses Voice)</option>
+                    <option value="non_speaker">Non-Speaker (Uses Sign Language)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="room-id">Room ID (leave empty to create new):</label>
+                <input type="text" id="room-id" placeholder="Enter Room ID">
+            </div>
+            <button id="start-meeting">🚀 Start Meeting</button>
+            <p id="connection-status">Connecting to server...</p>
+        </div>
+
+        <div class="section" id="meeting-section" style="display: none;">
+            <h2>Meeting Info</h2>
+            <p><strong>Room ID:</strong> <span id="room-id-display">-</span></p>
+            <p><strong>Your Role:</strong> <span id="user-role">-</span></p>
+            <p><strong>Status:</strong> <span id="status">Disconnected</span></p>
+
+            <h3>Participants (<span id="participant-count">0</span>)</h3>
+            <ul id="participants"></ul>
+
+            <h3>Video Streams</h3>
+            <div id="video-container"></div>
+
+            <h3>🗣️ Speech to Sign</h3>
+            <div class="input-group">
+                <input type="text" id="speech-input" placeholder="Type or speak your message">
+                <button id="convert-speech">Convert to Sign Language</button>
+            </div>
+
+            <h3>🤟 Sign to Speech</h3>
+            <div class="input-group">
+                <video id="local-video" autoplay muted style="width: 300px; height: 200px;"></video>
+                <button id="start-camera">📹 Start Camera</button>
+                <button id="translate-sign" disabled>📸 Translate Sign</button>
+            </div>
+
+            <h3>🔄 Live Translations</h3>
+            <div id="translations">
+                <p>Translations will appear here in real-time...</p>
+            </div>
+
+            <button id="leave-meeting" style="background-color: #f44336;">🚪 Leave Meeting</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let roomId = null;
+        let userId = null;
+        let userType = null;
+        let username = null;
+        let localStream = null;
+        let peerConnections = {};
+        let sendingFrames = false;
+
+        // DOM Elements
+        const joinSection = document.getElementById('join-section');
+        const meetingSection = document.getElementById('meeting-section');
+        const startMeetingBtn = document.getElementById('start-meeting');
+        const leaveMeetingBtn = document.getElementById('leave-meeting');
+        const connectionStatus = document.getElementById('connection-status');
+        const roomIdDisplay = document.getElementById('room-id-display');
+        const userRole = document.getElementById('user-role');
+        const status = document.getElementById('status');
+        const participantCount = document.getElementById('participant-count');
+        const participantsList = document.getElementById('participants');
+        const videoContainer = document.getElementById('video-container');
+        const localVideo = document.getElementById('local-video');
+        const startCameraBtn = document.getElementById('start-camera');
+        const translateSignBtn = document.getElementById('translate-sign');
+        const speechInput = document.getElementById('speech-input');
+        const convertSpeechBtn = document.getElementById('convert-speech');
+        const translationsDiv = document.getElementById('translations');
+
+        // SocketIO Event Handlers
+        socket.on('connect', () => {
+            connectionStatus.textContent = 'Connected to server';
+            connectionStatus.style.color = '#4CAF50';
+        });
+
+        socket.on('meeting_created', (data) => {
+            roomId = data.room_id;
+            userId = data.user_id;
+            userType = data.user_type;
+            username = data.username;
+            joinMeetingUI();
+        });
+
+        socket.on('meeting_joined', (data) => {
+            roomId = data.room_id;
+            userId = data.user_id;
+            updateParticipants(data.participants);
+            joinMeetingUI();
+        });
+
+        socket.on('user_joined', (data) => {
+            updateParticipants(data.participants);
+            setupPeerConnection(data.user_id);
+        });
+
+        socket.on('user_left', (data) => {
+            updateParticipants(data.participants);
+            if (peerConnections[data.user_id]) {
+                peerConnections[data.user_id].close();
+                delete peerConnections[data.user_id];
+                const remoteVideo = document.getElementById(`video-${data.user_id}`);
+                if (remoteVideo) remoteVideo.remove();
+            }
+        });
+
+        socket.on('live_translation', (data) => {
+            addTranslation(data);
+        });
+
+        socket.on('error', (data) => {
+            alert(data.message);
+        });
+
+        socket.on('webrtc_offer', async (data) => {
+            const pc = setupPeerConnection(data.from_user);
+            await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('webrtc_answer', { target_user: data.from_user, answer });
+        });
+
+        socket.on('webrtc_answer', async (data) => {
+            const pc = peerConnections[data.from_user];
+            if (pc) {
+                await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+            }
+        });
+
+        socket.on('webrtc_ice_candidate', (data) => {
+            const pc = peerConnections[data.from_user];
+            if (pc) {
+                pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        });
+
+        // UI Functions
+        function joinMeetingUI() {
+            joinSection.style.display = 'none';
+            meetingSection.style.display = 'block';
+            roomIdDisplay.textContent = roomId;
+            userRole.textContent = userType === 'speaker' ? 'Speaker' : 'Non-Speaker';
+            status.textContent = 'Connected';
+            status.style.color = '#4CAF50';
+        }
+
+        function updateParticipants(participants) {
+            participantCount.textContent = Object.keys(participants).length;
+            participantsList.innerHTML = '';
+            for (let id in participants) {
+                const li = document.createElement('li');
+                li.textContent = `${participants[id].username} (${participants[id].user_type})`;
+                participantsList.appendChild(li);
+            }
+        }
+
+        function addTranslation(data) {
+            const entry = document.createElement('div');
+            entry.className = 'translation-entry';
+            if (data.type === 'sign_to_speech') {
+                entry.innerHTML = `<strong>${data.from_user.slice(0, 8)} (Sign):</strong> ${data.sentence} <br><small>${new Date(data.timestamp).toLocaleTimeString()}</small>`;
+            } else {
+                const video = document.createElement('video');
+                video.src = `data:video/mp4;base64,${data.video_data}`;
+                video.controls = true;
+                video.style.width = '200px';
+                entry.innerHTML = `<strong>${data.from_user.slice(0, 8)} (Speech):</strong> ${data.original_text} <br>`;
+                entry.appendChild(video);
+                entry.innerHTML += `<br><small>${new Date(data.timestamp).toLocaleTimeString()}</small>`;
+            }
+            translationsDiv.prepend(entry);
+        }
+
+        // WebRTC Setup
+        function setupPeerConnection(targetUserId) {
+            if (peerConnections[targetUserId]) return peerConnections[targetUserId];
+
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+
+            peerConnections[targetUserId] = pc;
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc_ice_candidate', {
+                        target_user: targetUserId,
+                        candidate: event.candidate
+                    });
+                }
+            };
+
+            pc.ontrack = (event) => {
+                let remoteVideo = document.getElementById(`video-${targetUserId}`);
+                if (!remoteVideo) {
+                    remoteVideo = document.createElement('video');
+                    remoteVideo.id = `video-${targetUserId}`;
+                    remoteVideo.autoplay = true;
+                    videoContainer.appendChild(remoteVideo);
+                }
+                remoteVideo.srcObject = event.streams[0];
+            };
+
+            if (localStream) {
+                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            }
+
+            if (userId < targetUserId) {
+                pc.createOffer()
+                    .then(offer => pc.setLocalDescription(offer))
+                    .then(() => {
+                        socket.emit('webrtc_offer', { target_user: targetUserId, offer: pc.localDescription });
+                    });
+            }
+
+            return pc;
+        }
+
+        // Event Listeners
+        startMeetingBtn.addEventListener('click', () => {
+            username = document.getElementById('username').value || `User-${Math.random().toString(36).slice(2, 8)}`;
+            userType = document.getElementById('user-type').value;
+            const inputRoomId = document.getElementById('room-id').value;
+
+            if (inputRoomId) {
+                socket.emit('join_meeting', { room_id: inputRoomId, user_type: userType, username });
+            } else {
+                socket.emit('create_meeting', { user_type: userType, username });
+            }
+        });
+
+        leaveMeetingBtn.addEventListener('click', () => {
+            socket.emit('leave_meeting', { room_id: roomId });
+            joinSection.style.display = 'block';
+            meetingSection.style.display = 'none';
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            for (let id in peerConnections) {
+                peerConnections[id].close();
+            }
+            peerConnections = {};
+            videoContainer.innerHTML = '';
+            localVideo.srcObject = null;
+            sendingFrames = false;
+            translateSignBtn.disabled = true;
+        });
+
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: userType === 'speaker' });
+                localVideo.srcObject = localStream;
+                for (let id in peerConnections) {
+                    localStream.getTracks().forEach(track => peerConnections[id].addTrack(track, localStream));
+                }
+                translateSignBtn.disabled = false;
+            } catch (e) {
+                alert('Failed to access camera: ' + e.message);
+            }
+        });
+
+        translateSignBtn.addEventListener('click', () => {
+            if (!sendingFrames) {
+                sendingFrames = true;
+                translateSignBtn.textContent = 'Stop Translating';
+                captureFrames();
+            } else {
+                sendingFrames = false;
+                translateSignBtn.textContent = '📸 Translate Sign';
+            }
+        });
+
+        convertSpeechBtn.addEventListener('click', () => {
+            const text = speechInput.value.trim();
+            if (text) {
+                socket.emit('live_speech_to_sign', { room_id: roomId, text });
+                speechInput.value = '';
+            }
+        });
+
+        // Frame Capture for Sign Translation
+        function captureFrames() {
+            if (!sendingFrames) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = localVideo.videoWidth;
+            canvas.height = localVideo.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(localVideo, 0, 0, canvas.width, canvas.height);
+            const frameData = canvas.toDataURL('image/jpeg', 0.8);
+
+            socket.emit('live_sign_translation', { room_id: roomId, frame_data: frameData });
+
+            setTimeout(captureFrames, 100); // Capture frame every 100ms
+        }
+    </script>
+</body>
+</html>

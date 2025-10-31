@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-900 text-white">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign Language Meeting</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script defer src="main.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-6">
+  <div class="max-w-3xl mx-auto space-y-6">
+    <h1 class="text-3xl font-bold text-center">Live Meeting Sign Translator</h1>
+
+    <div id="join-section" class="space-y-2">
+      <input id="username" class="w-full p-2 bg-gray-800 rounded" placeholder="Enter your name">
+      <input id="room-id" class="w-full p-2 bg-gray-800 rounded" placeholder="Enter or paste Room ID">
+      <button id="join-btn" class="w-full bg-green-600 hover:bg-green-700 p-2 rounded font-semibold">Join Meeting</button>
+      <button id="create-room-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold">Create New Room</button>
+    </div>
+
+    <div id="meeting-section" class="hidden space-y-4">
+      <div class="flex justify-between">
+        <span id="room-info" class="text-sm text-gray-400"></span>
+        <button id="leave-btn" class="text-red-400 hover:text-red-600">Leave</button>
+      </div>
+
+      <video id="video-preview" autoplay muted class="rounded w-full h-64 object-cover bg-black"></video>
+
+      <div class="flex space-x-2">
+        <button id="start-video" class="bg-yellow-500 hover:bg-yellow-600 p-2 rounded">Start Video</button>
+        <button id="stop-video" class="bg-yellow-700 hover:bg-yellow-800 p-2 rounded">Stop Video</button>
+        <button id="send-text-btn" class="bg-purple-600 hover:bg-purple-700 p-2 rounded">Send Text</button>
+        <input id="text-input" placeholder="Text to sign..." class="flex-1 p-2 bg-gray-800 rounded">
+      </div>
+
+      <div id="translations" class="space-y-2">
+        <h2 class="text-lg font-bold">Live Translations</h2>
+        <div id="output" class="space-y-1 text-sm text-green-300 font-mono"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

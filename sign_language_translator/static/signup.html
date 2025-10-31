@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Together</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(to bottom, #4a90e2 30%, white 30%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: 16px;
+            position: relative;
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+            font-size: 1.5rem;
+            text-decoration: none;
+        }
+        
+        .signup-container {
+            background-color: white;
+            border-radius: 25px 25px 0 0;
+            width: 100%;
+            padding: 25px 20px;
+            margin-top: 60px;
+            flex-grow: 1;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 1.6rem;
+            margin-bottom: 3px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .subtitle a {
+            color: #4a90e2;
+            text-decoration: none;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: normal;
+            margin-bottom: 5px;
+            color: #888;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            font-size: 0.9rem;
+            color: #333;
+        }
+        
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 1em;
+            
+        }
+        
+        .btn-signup {
+            background: linear-gradient(to right, #23c6d4, #4a90e2);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: 75%;
+            margin-top: 20px;
+            text-align: center;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .role-selector {
+            display: flex;
+            margin-bottom: 15px;
+            width: 75%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .role-option {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border: 1px solid #ddd;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .role-option:first-child {
+            border-radius: 5px 0 0 5px;
+        }
+        
+        .role-option:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .role-option.selected {
+            background-color: #4a90e2;
+            color: white;
+            border-color: #4a90e2;
+        }
+    </style>
+</head>
+<body>
+    <a href="login.html" class="back-button">←</a>
+    
+    <div class="signup-container">
+        <h1>Create new Account</h1>
+        <p class="subtitle">Already Registered? <a href="login.html">Log in here</a></p>
+        
+        <form>
+            <div class="form-group">
+                <label for="name">NAME</label>
+                <input type="text" id="name" value="Jiara Martins">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">EMAIL</label>
+                <input type="email" id="email" value="hello@reallygreatsite.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">PASSWORD</label>
+                <input type="password" id="password" value="******">
+            </div>
+             
+            <div class="form-group">
+                <label for="dob">DATE OF BIRTH</label>
+                <select id="dob">
+                    <option>Select</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>I AM A</label>
+                <div class="role-selector">
+                    <div class="role-option selected" id="speaker-option" onclick="selectRole('speaker')">Speaker</div>
+                    <div class="role-option" id="non-speaker-option" onclick="selectRole('non-speaker')">Non-Speaker</div>
+                </div>
+                <input type="hidden" id="user-role" name="user-role" value="speaker">
+            </div>
+            
+            <button type="submit" class="btn-signup">Sign up</button>
+        </form>
+    </div>
+    
+    <script>
+        function selectRole(role) {
+            document.getElementById('speaker-option').classList.remove('selected');
+            document.getElementById('non-speaker-option').classList.remove('selected');
+            
+            if (role === 'speaker') {
+                document.getElementById('speaker-option').classList.add('selected');
+            } else {
+                document.getElementById('non-speaker-option').classList.add('selected');
+            }
+            
+            document.getElementById('user-role').value = role;
+        }
+    </script>
+</body>
+</html>

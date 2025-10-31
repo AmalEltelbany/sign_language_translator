@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live ASL ↔ Text Translator</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 1rem; background: #f4f4f4; }
+    #controls { margin-bottom: 1rem; }
+    #controls input { padding: 0.5rem; font-size: 1rem; }
+    #videoContainer { display: flex; gap: 1rem; }
+    video, canvas { border: 1px solid #ccc; width: 320px; height: 240px; background: black; }
+    #translations { margin-top: 1rem; padding: 0.5rem; background: white; height: 6rem; overflow-y: auto; }
+    #text2sign { margin-top: 1rem; }
+    #signVideo { display: block; margin-top: 0.5rem; max-width: 100%; }
+  </style>
+</head>
+<body>
+
+  <div id="controls">
+    <input id="meetingId" placeholder="Meeting ID" />
+    <button id="createBtn">Create</button>
+    <button id="joinBtn">Join</button>
+  </div>
+
+  <div id="videoContainer">
+    <video id="localVideo" autoplay muted></video>
+    <canvas id="captureCanvas" width="320" height="240" style="display:none;"></canvas>
+  </div>
+
+  <div id="translations">
+    <strong>Live Translations:</strong><br/>
+  </div>
+
+  <div id="text2sign">
+    <input id="typeText" placeholder="Type a sentence…" style="width: 70%;" />
+    <button id="sendTextBtn">Send</button>
+    <video id="signVideo" controls></video>
+  </div>
+
+  <!-- socket.io client -->
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"
+          integrity="sha384-S+Mmd4AQi2ODSCZ5J+f3lpLDh/WDo6fpdChx6tHFT/vmxrwHjG63VyxgssUbtj3o"
+          crossorigin="anonymous"></script>
+  <script>
+    const socket = io();
+
+    let meetingId = null;
+    const localVideo = document.getElementById('localVideo');
+    const canvas = document.getElementById('captureCanvas');
+    const ctx = canvas.getContext('2d');
+    const translationsDiv = document.getElementById('translations');
+    const signVideo = document.getElementById('signVideo');
+
+    // 1) Meeting controls
+    document.getElementById('createBtn').onclick = () => {
+      meetingId = document.getElementById('meetingId').value.trim() || Math.random().toString(36).slice(2);
+      socket.emit('create_meeting', { meeting_id: meetingId });
+    };
+    document.getElementById('joinBtn').onclick = () => {
+      meetingId = document.getElementById('meetingId').value.trim();
+      if (!meetingId) return alert('Enter a Meeting ID');
+      socket.emit('join_meeting', { meeting_id: meetingId, user: 'guest' });
+      startWebcamLoop();
+    };
+
+    socket.on('meeting_created', data => {
+      document.getElementById('meetingId').value = data.meeting_id;
+      alert('Meeting ’' + data.meeting_id + '’ created. Share this ID to join.');
+      startWebcamLoop();
+    });
+    socket.on('user_joined', data => {
+      appendMsg(`⚡ ${data.user} joined`);
+    });
+    socket.on('user_left',  data => {
+      appendMsg(`⚡ ${data.user} left`);
+    });
+
+    // 2) Webcam capture & emit frames every 100ms
+    async function startWebcamLoop() {
+      if (!meetingId) return;
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      localVideo.srcObject = stream;
+
+      setInterval(() => {
+        ctx.drawImage(localVideo, 0, 0, canvas.width, canvas.height);
+        const dataUri = canvas.toDataURL('image/jpeg', 0.6);
+        socket.emit('live_sign_frame', { meeting_id: meetingId, frame: dataUri });
+      }, 100);
+    }
+
+    // 3) Receive ASL→text translations
+    socket.on('translation_sign2text', payload => {
+      appendMsg(`🤟 → 📝: ${payload.text}`);
+    });
+
+    // 4) Send typed text to backend → request sign-video
+    document.getElementById('sendTextBtn').onclick = () => {
+      const txt = document.getElementById('typeText').value.trim();
+      if (!txt || !meetingId) return;
+      socket.emit('live_speech_text', { meeting_id: meetingId, text: txt });
+      appendMsg(`📝 → 🤟: ${txt}`);
+      document.getElementById('typeText').value = '';
+    };
+
+    // 5) Receive sign-video clip and play it
+    socket.on('translation_text2sign', payload => {
+      signVideo.src = payload.video;
+      signVideo.play();
+    });
+
+    // helper to append messages
+    function appendMsg(msg) {
+      translationsDiv.innerHTML += msg + '<br/>';
+      translationsDiv.scrollTop = translationsDiv.scrollHeight;
+    }
+  </script>
+</body>
+</html>
